@@ -16,21 +16,43 @@ function demo {
   $result = @socket_connect($socket, $host, $port) or die("Could not connect socket<br>"); 
   
   //echo "Sending request... ";
-  $in = chr(0x01) . chr(0x03) .chr(0x14) .chr(0x50) .chr(0x00) .chr(0x30) .chr(0x40) .chr(0x3F); 
-  $out = '';
+  //Richiedo 48 byte (=0x30) partendo dall'indirizzo 0x1450;
+  //Il frame diventerà questo: chr(0x01) . chr(0x03) .chr(0x14) .chr(0x50) .chr(0x00) .chr(0x30) .chr(0x40) .chr(0x3F);
+  $in = frameGeneratorRead(0x1450, 0x30); 
   socket_write($socket, $in, strlen($in)) or die("Could not write into the socket<br>");
   
   //echo "Reading response:<br>";
+  //Riceverò una risposta Jbus che salverò dentro la variabile $out
+  $out = '';
   $out = socket_read($socket, 2048) or die("Could not read from socket<br>");
   
+  //Ora converto la risposta in un array
   $splittata_rectifier = str_split($out);
   
+  //In questo punto del programma ho a disposizione l'array $splittata_rectifier, che è a tutti gli effetti un array
+  //corrispondente byte-per-byte alla risposta Jbus.
+  
+  //Ora estraggo ogni misura ricevuta e la salvo dentro un altro array
   $data = array();
-  for ($i = 0; $i <= 47; $i++) {
+  for ($i = 0; $i <= 47; $i++) {  //per 48 misure...
     //All'interno di questo ciclo for, assegno all'array tutte le misure del raddrizzatore
-    $data['MA' . ($i) ]=meas($splittata_rectifier,$i);
+    $data['MA' . ($i) ]=extractWord($splittata_rectifier,$i);
   }
   
+  //In questo punto del programma avrò a disposizione tutte le misure effettuate
+  //dentro un array: $data['MA0'] ... $data['MA47']
+
+}
+
+function extractWord($jbus_frame, $word_number /*, $offset=0*/) {
+  //Dato un vettore di dati ricevuto via JBUS, restituisco la word richiesta, considerando che i primi
+  //tre byte di qualsiasi pacchetto JBUS sono dati "non interessanti" per noi.
+  
+  //TODO: controllare se il jbus_frame in analisi contiene una risposta negativa dell'host.
+  
+  $word_number=$word_number*2; //perchè si ragiona a 16 bit, non a 8 bit
+  $word_number=$word_number+3; //perchè i primi tre byte fanno parte del protocollo JBUS
+  return (ord($jbus_frame[$word_number])*255) + (ord($jbus_frame[$word_number+1]));
 }
 
 function frameGeneratorRead($address, $quantity=1, $node=1) {
@@ -85,7 +107,7 @@ function crc16($data)
        }
      }
    }
-   return $crc; //34 12
+   return $crc; //una word, due byte.
  }
  
 ?>
