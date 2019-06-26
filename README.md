@@ -1,2 +1,2 @@
 # Jbus-communication
-PHP libray for JBUS/MODBUS communication
+PHP libray for JBUS/MODBUS communication via TCP/IP
