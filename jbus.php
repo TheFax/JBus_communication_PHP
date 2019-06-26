@@ -5,6 +5,34 @@
 //echo dechex(crc16( "\x01\x03\x05\x00\x00\x2A" ) & 0xFF).' '.dechex(crc16( "\x01\x03\x05\x00\x00\x2A" )>>8 & 0xFF) . '<br>'; 
 //echo bin2hex(frameGeneratorRead(1280,42,1));
 
+function demo {
+  /* Create a TCP/IP socket. */
+  /*http://php.net/manual/en/function.socket-create.php*/
+  $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket<br>"); 
+  socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array('sec' => 1, 'usec' => 500));
+  socket_set_option($socket, SOL_SOCKET, SO_SNDTIMEO, array('sec' => 1, 'usec' => 500));
+
+  //echo "Attempting to connect...";
+  $result = @socket_connect($socket, $host, $port) or die("Could not connect socket<br>"); 
+  
+  //echo "Sending request... ";
+  $in = chr(0x01) . chr(0x03) .chr(0x14) .chr(0x50) .chr(0x00) .chr(0x30) .chr(0x40) .chr(0x3F); 
+  $out = '';
+  socket_write($socket, $in, strlen($in)) or die("Could not write into the socket<br>");
+  
+  //echo "Reading response:<br>";
+  $out = socket_read($socket, 2048) or die("Could not read from socket<br>");
+  
+  $splittata_rectifier = str_split($out);
+  
+  $data = array();
+  for ($i = 0; $i <= 47; $i++) {
+    //All'interno di questo ciclo for, assegno all'array tutte le misure del raddrizzatore
+    $data['MA' . ($i) ]=meas($splittata_rectifier,$i);
+  }
+  
+}
+
 function frameGeneratorRead($address, $quantity=1, $node=1) {
   $frame = '';
   //Slave number / Function READ / Address High / Address Low / 0 / Nb of word to read / CRC low / CRC high
