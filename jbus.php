@@ -1,10 +1,5 @@
 <?php
 
-//TX | 01 03 05 00 00 2A C4 D9 
-
-//echo dechex(crc16( "\x01\x03\x05\x00\x00\x2A" ) & 0xFF).' '.dechex(crc16( "\x01\x03\x05\x00\x00\x2A" )>>8 & 0xFF) . '<br>'; 
-//echo bin2hex(frameGeneratorRead(1280,42,1));
-
 function demo {
   /* Create a TCP/IP socket. */
   /*http://php.net/manual/en/function.socket-create.php*/
@@ -21,10 +16,14 @@ function demo {
   $in = frameGeneratorRead(0x1450, 0x30); 
   socket_write($socket, $in, strlen($in)) or die("Could not write into the socket<br>");
   
+  echo bin2hex($in);
+  
   //echo "Reading response:<br>";
   //Riceverò una risposta Jbus che salverò dentro la variabile $out
   $out = '';
   $out = socket_read($socket, 2048) or die("Could not read from socket<br>");
+  
+  echo bin2hex($out);
   
   //Ora converto la risposta in un array
   $splittata_rectifier = str_split($out);
